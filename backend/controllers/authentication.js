@@ -4,23 +4,38 @@ const bcrypt = require('bcrypt')
 
 const { User } = db
 
-router.post('/', async (req, res) => {
-    
-    let user = await User.findOne({
-        where: { email: req.body.email }
+router.post('/:placeId/comments', async (req, res) => {
+    const placeId = Number(req.params.placeId)
+
+    req.body.rant = req.body.rant ? true : false
+
+    const place = await Place.findOne({
+        where: { placeId: placeId }
     })
 
-    if (!user || !await bcrypt.compare(req.body.password, user.passwordDigest)) {
-        res.status(404).json({ 
-            message: `Could not find a user with the provided username and password` 
-        })
-    } else {
-        req.session.userId = user.userId
-        res.json({ user })                                       
+    if (!place) {
+        return res.status(404).json({ message: `Could not find place with id "${placeId}"` })
     }
+
+    if (!req.currentUser) {
+        return res.status(404).json({ message: `You must be logged in to leave a rand or rave.` })
+    }
+
+    const comment = await Comment.create({
+        ...req.body,
+        authorId: req.currentUser.userId,
+        placeId: placeId
+    })
+
+    res.send({
+        ...comment.toJSON(),
+        author: req.currentUser
+    })
 })
 
+
 router.get('/profile', async (req, res) => {
+    res.json(req.currentUser)
     console.log(req.session.userId)
     try {
         let user = await User.findOne({
