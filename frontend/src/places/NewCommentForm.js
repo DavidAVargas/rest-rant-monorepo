@@ -14,7 +14,7 @@ function NewCommentForm({ place, onSubmit }) {
 
     useEffect(() => {
         const fetchData = async () => {
-            const response = await fetch(`http://localhost:5000/users`)
+            const response = await fetch(`http://localhost:5001/users`)
             const users = await response.json()
             setComment({ ...comment, authorId: users[0]?.userId})
             setAuthors(users)
@@ -36,6 +36,12 @@ function NewCommentForm({ place, onSubmit }) {
             authorId: authors[0]?.userId
         })
     }
+
+    const { currentUser } = useContext(CurrentUser)
+
+if(!currentUser){
+    return <p>You must be logged in to leave a rant or rave.</p>
+}
 
     return (
         <form onSubmit={handleSubmit}>
